@@ -1,56 +1,69 @@
-import tweepy
+import tweepy, time
 from tweepy import TweepError
 
-class Tweet:
+class SameTweetException(BaseException):
+	def __init__(self, message):
+		self.message = message
+
+class Tweet():
 	def _init_(self):
 		return null
 
 	def postTweet(self, message, api):
 		try:
-			posted = api.update_status(status=message)
-		except tweepy.TweepError as err:
+			posted = api.update_status(status=message)	#I AM GONNA POST IT
+		except tweepy.TweepError as err:				#SHIT I FAILED
 			er_code = err.args[0][0]['code']
 			print (er_code)
-			if er_code == 187:		#duplicate tweet error
+			if er_code == 187:							#So it was a duplicate tweet
 				print("Cant tweet same thing twice")
-				print("Generating a new message")
-				message = Lines(loc).getLine()
-				postTweet(message, api)
+				print("Raising an error")
+				raise SameTweetException("Same Tweet")	#Let's throw an exception to be caught by someone else
 				return()
 
-
-			elif er_code == 186:	#long tweet error
-				print("Tweet to long")print("Slicing tweet")
+			elif er_code == 186:						#Why the hell we can't post longer tweets
+				print("Tweet to long")
+				print("Slicing tweet")
 				lenOfMessage = len(message)
-				postTweet(message[0:135]+"+++", api)
-				postTweet(message[135:], api)
-				return()
-			else:
-				print ("Unexpected exception = \"{0}\"".format(err.args[0][0]['message']))
-				postTweet(message, api)
-		except Exception as er:
-			postTweet(message, api)
+				postTweet(message[0:135]+"+++", api)	#So let's post its first 135 char first
+				postTweet(message[135:], api)			#And try to post remaining
+				return()								#Done? Done.
 
-	def get_api(self, loc):  #insert location of keys for auth. use return api value for posting
+			else:
+				print ("Unexpected exception = \"{0}\"".format(err.args[0][0]['message'])) #What the heck? That was unexpected.
+				postTweet(message, api) 				#I don't know what to do. So let's try to post it again.
+		except Exception as er:
+			postTweet(message, api)						#There was something wrong with internet i guess, so let's try again.
+
+	def get_api(self, loc):  							#insert location of keys for auth. use return api value for posting
 		try:
-			keys = open(loc, "r").read().splitlines()
-			cfg = {}
+			foo = open(loc, "r")
+			keys = foo.read().splitlines()
+			foo.close()
+			'''
+			keys.txt's structure is like;
+
+			consumer_token,KEY
+			consumer_secret,KEY
+			access_token,KEY
+			access_secret,KEY
+			'''
+			cfg = {}								#It is config dictionary
 			for line in keys:
 				key_name = line.split(",")[0]
 				key = line.split(",")[1]
 				cfg[key_name] = key
 			auth = tweepy.OAuthHandler(cfg['consumer_token'], cfg['consumer_secret'])
-			auth.set_access_token(cfg['access_token'], cfg['access_secret'])
+			auth.set_access_token(cfg['access_token'], cfg['access_secret'])	#authenticating
 			return (tweepy.API(auth))
-		except Exception: #if an exception is raised, it tries to get api again.
+		except Exception:							#What? You can't even authenticate? Try again, you must do it
 			return (get_api(loc))
-
 
 class Lines:
 	lineLoc = ""
 	def __init__ (self, loc):
 		Lines.lineLoc = loc
-		try:
+		try:										#Let's import random library in a class. Because why not?
 			import random
 		except ImportError:
 			self.random = None
@@ -61,7 +74,14 @@ class Lines:
 		file = open(Lines.lineLoc, "r", encoding='cp1254')
 		garavel = file.read().splitlines()
 		file.close()
-		return (self.random.choice(garavel).strip())
+		x = 0
+		while (x == 0):
+			secilen = self.random.choice(garavel).strip()
+			if (len(secilen) > 3):
+				x = 1
+		if "=" in secilen:
+			secilen = secilen.split("=")[1]
+		return (secilen)
 
 
 def main():
@@ -69,41 +89,16 @@ def main():
 	linesLoc = "adim garavel.txt"
 	tweet1 = Tweet()
 	lines1 = Lines(linesLoc)
-	print (lines1.getLine())
 	api = tweet1.get_api(keysLoc)
-	message = "Arif gelirken imam hatipleri kapatır mısın?"
 	while True:
-		tweet1.postTweet(message, api)
-
-
-
-	"""keys = open("keys.txt", "r").read().splitlines()
-	cfg = {}
-	for line in keys:
-		key_name = line.split(",")[0]
-		key = line.split(",")[1]
-		cfg[key_name] = key
-
-	api = get_api(cfg)"""
-	"""while True:
 		try:
-			status = api.update_status(status="ali babanın çifliğindeki orospu çocuğu öküzlerden bir farkın olsun be ekmek kafalı elmır salağı senin ananın amına fırıncı küreği sokayım imam hatipler kapatılsın")
-			break
-		except tweepy.TweepError as err:
-			er_code = err.args[0][0]['code']
-			print (er_code)
-			if er_code == 187:
-				print("Cant tweet same thing twice")
-			elif er_code == 186:
-				print("Tweet to long")
-			else:
-				print ("Unexpected exception = \"{0}\"".format(err.args[0][0]['message']))
-			break
-		except Exception as er:
-			print("******")
-			print (er)
-			print("******")
-		#break"""
+			message = lines1.getLine()
+			print(message)
+			tweet1.postTweet(message, api)
+			time.sleep(60)
+		except SameTweetException:
+			print("CAUGHT")
+			tweet1.postTweet(lines1.getLine(), api)
 
 if __name__ == "__main__":
 	main()
