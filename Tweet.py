@@ -1,9 +1,5 @@
-import tweepy, time
 from tweepy import TweepError
-
-class SameTweetException(BaseException):
-	def __init__(self, message):
-		self.message = message
+import tweepy
 
 class Tweet():
 	def _init_(self):
@@ -30,7 +26,7 @@ class Tweet():
 				lenOfMessage = len(message)
 				print(lenOfMessage)
 				self.postTweet(message[0:135]+"+++", api)	#So let's post its first 135 char first
-				self.postTweet(message[135:], api)			#And try to post remaining
+				self.postTweet("+++"+message[135:], api)			#And try to post remaining
 				return()								#Done? Done.
 
 			else:
@@ -62,49 +58,3 @@ class Tweet():
 			return (tweepy.API(auth))
 		except Exception:							#What? You can't even authenticate? Try again, you must do it
 			return (get_api(loc))
-
-class Lines:
-	lineLoc = ""
-	def __init__ (self, loc):
-		Lines.lineLoc = loc
-		try:										#Let's import random library in a class. Because why not?
-			import random
-		except ImportError:
-			self.random = None
-		else:
-			self.random = random
-
-	def getLine(self):
-		file = open(Lines.lineLoc, "r", encoding='cp1254')
-		garavel = file.read().splitlines()
-		file.close()
-		x = 0
-		while (x == 0):
-			secilen = self.random.choice(garavel).strip()
-			if (len(secilen) > 3):
-				x = 1
-		if "=" in secilen:
-			secilen = secilen.split("=")[1]
-		return (secilen)
-
-
-def main():
-	keysLoc = "keys.txt"
-	linesLoc = "adim garavel.txt"
-	tweet1 = Tweet()
-	lines1 = Lines(linesLoc)
-	api = tweet1.get_api(keysLoc)
-	while True:
-		try:
-			message = lines1.getLine()
-			print(message)
-			tweet1.postTweet(message, api)
-			time.sleep(15)
-		except SameTweetException:
-			tweet1.postTweet(lines1.getLine(), api)
-
-if __name__ == "__main__":
-	try:
-		main()
-	except Exception:
-		main()
