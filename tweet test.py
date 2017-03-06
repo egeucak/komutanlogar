@@ -13,7 +13,10 @@ class Tweet():
 		try:
 			posted = api.update_status(status=message)	#I AM GONNA POST IT
 		except tweepy.TweepError as err:				#SHIT I FAILED
-			er_code = err.args[0][0]['code']
+			if 'code' in err.args[0][0]:
+				er_code = err.args[0][0]['code']
+			else:
+				er_code = 404
 			print (er_code)
 			if er_code == 187:							#So it was a duplicate tweet
 				print("Cant tweet same thing twice")
@@ -25,15 +28,16 @@ class Tweet():
 				print("Tweet to long")
 				print("Slicing tweet")
 				lenOfMessage = len(message)
-				postTweet(message[0:135]+"+++", api)	#So let's post its first 135 char first
-				postTweet(message[135:], api)			#And try to post remaining
+				print(lenOfMessage)
+				self.postTweet(message[0:135]+"+++", api)	#So let's post its first 135 char first
+				self.postTweet(message[135:], api)			#And try to post remaining
 				return()								#Done? Done.
 
 			else:
-				print ("Unexpected exception = \"{0}\"".format(err.args[0][0]['message'])) #What the heck? That was unexpected.
-				postTweet(message, api) 				#I don't know what to do. So let's try to post it again.
+				print ("Unexpected exception = \"{0}\"".format(err)) #What the heck? That was unexpected.
+				self.postTweet(message, api) 				#I don't know what to do. So let's try to post it again.
 		except Exception as er:
-			postTweet(message, api)						#There was something wrong with internet i guess, so let's try again.
+			self.postTweet(message, api)						#There was something wrong with internet i guess, so let's try again.
 
 	def get_api(self, loc):  							#insert location of keys for auth. use return api value for posting
 		try:
@@ -93,12 +97,15 @@ def main():
 	while True:
 		try:
 			message = lines1.getLine()
+			message = "hadi olum düş. Hadi heryerden çekiyodun. Hadi. Hah, alo, muhittin. Arif ben, amerikan başkanı dahil herkesi devreye sok. uzaylılar tarafından kaçırıldım. Ney? Ewet tarafından."
 			print(message)
 			tweet1.postTweet(message, api)
-			time.sleep(60)
+			time.sleep(15)
 		except SameTweetException:
-			print("CAUGHT")
 			tweet1.postTweet(lines1.getLine(), api)
 
 if __name__ == "__main__":
-	main()
+	try:
+		main()
+	except Exception:
+		main()
